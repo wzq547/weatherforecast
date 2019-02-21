@@ -1,8 +1,11 @@
 package com.weatherforecast.android.Fragment;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,8 +15,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.weatherforecast.android.Activity.ActivityMain;
+import com.weatherforecast.android.Activity.ActivityWeather;
 import com.weatherforecast.android.MyApplication;
 import com.weatherforecast.android.R;
 import com.weatherforecast.android.db.City;
@@ -46,6 +50,9 @@ public class FragmentChooseArea extends Fragment {
     private ListView listView;
     private ArrayAdapter<String> adapter;
     private List<String> dataList = new ArrayList<>();
+
+    private WifiManager wifiManager;
+
     private View fragmentView;
 
     /**
@@ -82,6 +89,9 @@ public class FragmentChooseArea extends Fragment {
         listView = (ListView) view.findViewById(R.id.choose_area_title_list);
         adapter = new ArrayAdapter<String>(MyApplication.getContext(),android.R.layout.simple_list_item_1,dataList);
         listView.setAdapter(adapter);
+
+        wifiManager = (WifiManager) MyApplication.getContext().getSystemService(Context.WIFI_SERVICE);
+
         fragmentView = view;
         return view;
     }
@@ -98,6 +108,17 @@ public class FragmentChooseArea extends Fragment {
                 }else if (currentLevel == LEVEL_CITY) {
                     selectedCity = cityList.get(position);
                     queryCounties();
+                }else if (currentLevel == LEVEL_COUNTY) {
+                    String weatherId = countyList.get(position).getWeatherId();
+                    if (getActivity() instanceof ActivityMain){
+                        ActivityWeather.actionStart(getActivity(),weatherId);
+                        getActivity().finish();
+                    }else if (getActivity() instanceof ActivityWeather){
+                        ActivityWeather activityWeather = (ActivityWeather) getActivity();
+                        activityWeather.drawerLayout.closeDrawers();
+                        activityWeather.swipeRefreshLayout.setRefreshing(true);
+                        activityWeather.requestWeather(weatherId);
+                    }
                 }
             }
         });
@@ -188,14 +209,17 @@ public class FragmentChooseArea extends Fragment {
                     @Override
                     public void run() {
                         closeProgressDialog();
-//                        Snackbar.make(fragmentView,"加载失败，请检查网络",Snackbar.LENGTH_SHORT)
-//                                .setAction("重试", new View.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(View v) {
-//                                        queryFromServer(address,type);
-//                                    }
-//                                }).show();
-                        Toast.makeText(MyApplication.getContext(),"加载失败，请检查网络",Toast.LENGTH_SHORT).show();
+                        Snackbar.make(fragmentView,"加载失败，请检查网络",Snackbar.LENGTH_SHORT)
+                                .setAction("重试", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        if (!wifiManager.isWifiEnabled()) {
+                                            wifiManager.setWifiEnabled(true);
+                                        }
+                                        queryFromServer(address,type);
+                                    }
+                                }).show();
+//                        Toast.makeText(MyApplication.getContext(),"加载失败，请检查网络",Toast.LENGTH_SHORT).show();
                     }
                 });
             }
