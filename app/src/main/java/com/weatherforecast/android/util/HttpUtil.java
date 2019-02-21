@@ -1,4 +1,4 @@
-package com.weatherforecast.android;
+package com.weatherforecast.android.util;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
