@@ -16,8 +16,9 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.weatherforecast.android.Activity.ActivityMain;
+import com.weatherforecast.android.Activity.ActivityChooseArea;
 import com.weatherforecast.android.Activity.ActivityWeather;
+import com.weatherforecast.android.LogUtil;
 import com.weatherforecast.android.MyApplication;
 import com.weatherforecast.android.R;
 import com.weatherforecast.android.db.City;
@@ -41,6 +42,9 @@ import okhttp3.Response;
  */
 
 public class FragmentChooseArea extends Fragment {
+
+    private static final String TAG = "FragmentChooseArea";
+
     public static final int LEVEL_PROVINCE = 0;
     public static final int LEVEL_CITY = 1;
     public static final int LEVEL_COUNTY = 2;
@@ -83,10 +87,10 @@ public class FragmentChooseArea extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.choose_area,container,false);
-        titleText = (TextView) view.findViewById(R.id.choose_area_title_text);
-        backButton = (Button) view.findViewById(R.id.choose_area_title_button);
-        listView = (ListView) view.findViewById(R.id.choose_area_title_list);
+        View view = inflater.inflate(R.layout.fragment_choose_area,container,false);
+        titleText = (TextView) view.findViewById(R.id.fragment_choose_area_title_text);
+        backButton = (Button) view.findViewById(R.id.fragment_choose_area_title_button);
+        listView = (ListView) view.findViewById(R.id.fragment_choose_area_title_list);
         adapter = new ArrayAdapter<String>(MyApplication.getContext(),android.R.layout.simple_list_item_1,dataList);
         listView.setAdapter(adapter);
 
@@ -109,15 +113,17 @@ public class FragmentChooseArea extends Fragment {
                     selectedCity = cityList.get(position);
                     queryCounties();
                 }else if (currentLevel == LEVEL_COUNTY) {
-                    String weatherId = countyList.get(position).getWeatherId();
-                    if (getActivity() instanceof ActivityMain){
-                        ActivityWeather.actionStart(getActivity(),weatherId);
-                        getActivity().finish();
+                    String coutyName = countyList.get(position).getCoutyName();
+                    if (getActivity() instanceof ActivityChooseArea){
+                        LogUtil.i(TAG, "onItemClick: " + coutyName);
+                        ActivityChooseArea activitychoosearea = (ActivityChooseArea) getActivity();
+                        activitychoosearea.ReBackCountyNameToActivityWeather(coutyName);
                     }else if (getActivity() instanceof ActivityWeather){
                         ActivityWeather activityWeather = (ActivityWeather) getActivity();
                         activityWeather.drawerLayout.closeDrawers();
                         activityWeather.swipeRefreshLayout.setRefreshing(true);
-                        activityWeather.requestWeather(weatherId);
+                        activityWeather.mlocation = coutyName;
+                        activityWeather.requestWeather(coutyName);
                     }
                 }
             }

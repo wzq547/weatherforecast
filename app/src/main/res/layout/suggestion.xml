@@ -12,29 +12,25 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="15dp"
         android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
         android:text="生活建议"
         android:textColor="#fff"
         android:textSize="20sp"/>
 
-    <TextView
-        android:id="@+id/suggestion_comfort_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="15dp"
-        android:textColor="#fff"/>
+    <LinearLayout
+        android:id="@+id/suggestion_linearout"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/suggestion_carwash_text"
+        android:id="@+id/suggestion_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="15dp"
-        android:textColor="#fff"/>
-
-    <TextView
-        android:id="@+id/suggestion_sport_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="15dp"
-        android:textColor="#fff"/>
+        android:layout_marginLeft="15dp"
+        android:layout_marginBottom="15dp"
+        android:textColor="#fff" />
 
 </LinearLayout>

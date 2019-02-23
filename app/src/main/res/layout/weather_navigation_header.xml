@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="150dp"
+    android:padding="10dp"
+    android:background="@color/colorPrimaryDark">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/weather_navigation_header_imageview"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:src="@mipmap/logo"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="20sp" />
+
+    <TextView
+        android:id="@+id/weather_navigation_header_shuju"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="数据来源 ： 和风天气"
+        android:textColor="#fff"
+        android:textSize="14dp"/>
+
+    <TextView
+        android:id="@+id/weather_navigation_header_appName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/weather_navigation_header_shuju"
+        android:text="我的天气"
+        android:textColor="#fff"
+        android:textSize="14dp"/>
+
+</RelativeLayout>

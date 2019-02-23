@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_weather"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimary">
+    android:background="@color/colorPrimary"
+    android:fitsSystemWindows="true">
 
     <ImageView
         android:id="@+id/activity_weather_imageview"
@@ -14,50 +17,119 @@
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/activity_weather_drawerlayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
 
-        <android.support.v4.widget.SwipeRefreshLayout
-            android:id="@+id/activity_weather_swiperefreshlayout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <android.support.v4.widget.NestedScrollView
-                android:id="@+id/activity_weather_nestedscrollview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="none"
-                android:overScrollMode="never">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:fitsSystemWindows="true">
-
-                    <include layout="@layout/title"/>
-                    <include layout="@layout/now"/>
-                    <include layout="@layout/forecast"/>
-                    <include layout="@layout/aqi"/>
-                    <include layout="@layout/suggestion"/>
-
-
-                </LinearLayout>
-
-            </android.support.v4.widget.NestedScrollView>
-
-        </android.support.v4.widget.SwipeRefreshLayout>
-
-        <fragment
-            android:id="@+id/activity_weather_fragmentchoosearea"
-            android:name="com.weatherforecast.android.Fragment.FragmentChooseArea"
+        <android.support.design.widget.CoordinatorLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="start"/>
+            android:fitsSystemWindows="true">
+
+            <android.support.design.widget.AppBarLayout
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:fitsSystemWindows="true">
+
+                <android.support.design.widget.CollapsingToolbarLayout
+                    android:id="@+id/activity_weather_collapsingtoolbatlayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                    app:contentScrim="?attr/colorPrimary"
+                    app:layout_scrollFlags="scroll|exitUntilCollapsed"
+                    android:fitsSystemWindows="true">
+
+                    <ImageView
+                        android:id="@+id/activity_weather_toobarimageview"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        app:layout_collapseMode="parallax"
+                        android:fitsSystemWindows="true"/>
+
+                    <android.support.v7.widget.Toolbar
+                        android:id="@+id/activity_weather_toolbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="?attr/actionBarSize"
+                        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                        app:layout_collapseMode="pin"/>
+
+                </android.support.design.widget.CollapsingToolbarLayout>
+
+            </android.support.design.widget.AppBarLayout>
+
+            <android.support.v4.widget.SwipeRefreshLayout
+                android:id="@+id/activity_weather_swiperefreshlayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+                <android.support.v4.widget.NestedScrollView
+                    android:id="@+id/activity_weather_nestedscrollview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="none"
+                    android:overScrollMode="never">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:fitsSystemWindows="true">
+
+                        <include layout="@layout/title" />
+                        <include layout="@layout/now"/>
+                        <include layout="@layout/now2"/>
+                        <include layout="@layout/forecast"/>
+                        <include layout="@layout/suggestion"/>
+
+
+                    </LinearLayout>
+
+                </android.support.v4.widget.NestedScrollView>
+
+            </android.support.v4.widget.SwipeRefreshLayout>
+
+        </android.support.design.widget.CoordinatorLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:background="@color/colorPrimaryDark"
+            android:fitsSystemWindows="true">
+
+            <android.support.design.widget.NavigationView
+                android:id="@+id/activity_weather_navigationview"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="15"
+                android:layout_gravity="start"
+                android:background="@color/colorPrimary"
+                app:headerLayout="@layout/weather_navigation_header"
+                app:menu="@menu/weather_navigation_menu"
+                app:itemTextColor="#fff" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+                <Button
+                    android:id="@+id/activity_weather_drawerlayout_buttonSetup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="设置"/>
+            </LinearLayout>
+
+            <!--<fragment-->
+                <!--android:id="@+id/activity_weather_fragmentchoosearea"-->
+                <!--android:name="com.weatherforecast.android.Fragment.FragmentChooseArea"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent" />-->
+
+        </LinearLayout>
 
     </android.support.v4.widget.DrawerLayout>
-
-
-
-
 
 </android.support.design.widget.CoordinatorLayout>

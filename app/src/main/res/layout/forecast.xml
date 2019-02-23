@@ -10,9 +10,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
-        android:layout_marginTop="15dp"
-        android:text="预报"
+        android:layout_margin="15dp"
+        android:text="未来3天天气预报"
         android:textColor="#fff"
         android:textSize="20sp"/>
 
@@ -20,7 +19,10 @@
         android:id="@+id/forecast_linearout"
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginBottom="10dp">
 
 
 
