@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -36,8 +37,12 @@ import com.weatherforecast.android.CollectorActivity;
 import com.weatherforecast.android.LogUtil;
 import com.weatherforecast.android.MyApplication;
 import com.weatherforecast.android.R;
+import com.weatherforecast.android.db.MyProvince;
 import com.weatherforecast.android.service.AutoUpdateService;
 import com.weatherforecast.android.util.HttpUtil;
+import com.weatherforecast.android.util.Utility;
+
+import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -67,37 +72,67 @@ public class ActivityWeather extends BaseActivity {
         context.startActivity(intent);
     }
 
+    /**
+     * 百度定位客户端
+     */
     public LocationClient mLocationClient = null;
-
+    /**
+     *标题栏ToolBar
+     */
     private CollapsingToolbarLayout collapsingToolbarLayout;
     private Toolbar toolbar;
     private ImageView toolBarImageView;
-
+    /**
+     *主页背景图
+     */
     private ImageView backgroundImage;
-
+    /**
+     *主页标题title
+     */
     private TextView titleCity;
-
+    /**
+     *主页实时天气1
+     */
     private ImageView nowimage;
     private TextView nowweatherdegreeText;
     private TextView nowweatherInfoText;
     private TextView nowweatherUpdataText;
-
+    /**
+     *主页实时天气2
+     */
     private TextView now2getFi;
     private TextView now2getHum;
     private TextView now2getPcpn;
 
 //    private LinearLayout forecastHourlyLayout;
-
+    /**
+     *主页未来三天天气预报框图
+     */
     private LinearLayout forecastLayout;
-
+    /**
+     *主页今日建议框图
+     */
     private LinearLayout suggestionLayout;
     private TextView suggestionText;
-
+    /**
+     *主页刷新控件、左划的抽屉控件、抽屉里的导航控件
+     */
     public SwipeRefreshLayout swipeRefreshLayout;
     public DrawerLayout drawerLayout;
     private NavigationView navigationView;
-
+    /**
+     *悬浮按钮控件
+     */
+    private FloatingActionButton floatingActionButton;
+    /**
+     *地址
+     */
     public String mlocation = null;
+    public String nlocation = null;
+    /**
+     * 是否第一次启动
+     */
+    private boolean writeProvinceAndCityIsFirst;
 
     /**
      * 处理从上一个活动返回的数据
@@ -148,7 +183,9 @@ public class ActivityWeather extends BaseActivity {
         setContentView(R.layout.activity_weather);
 
         final View view = getWindow().getDecorView().findViewById(R.id.activity_weather);
-
+        /**
+         *标题栏ToolBar
+         */
         collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.activity_weather_collapsingtoolbatlayout);
         collapsingToolbarLayout.setTitle("");
         toolbar = (Toolbar) findViewById(R.id.activity_weather_toolbar);
@@ -160,27 +197,41 @@ public class ActivityWeather extends BaseActivity {
         }
         toolBarImageView = (ImageView) findViewById(R.id.activity_weather_toobarimageview);
         Glide.with(MyApplication.getContext()).load(R.drawable.bg).into(toolBarImageView);
-
+        /**
+         *主页背景图
+         */
         backgroundImage = (ImageView) findViewById(R.id.activity_weather_imageview);
-
+        /**
+         *主页标题title
+         */
         titleCity = (TextView) findViewById(R.id.title_city);
-
+        /**
+         *主页实时天气1
+         */
         nowimage = (ImageView) findViewById(R.id.now_weather_image);
         nowweatherdegreeText = (TextView) findViewById(R.id.now_degree_text);
         nowweatherInfoText = (TextView) findViewById(R.id.now_weather_info_text);
         nowweatherUpdataText = (TextView) findViewById(R.id.now_weather_update_text);
-
+        /**
+         *主页实时天气2
+         */
         now2getFi = (TextView) findViewById(R.id.now2_getFI);
         now2getHum = (TextView) findViewById(R.id.now2_getHum);
         now2getPcpn = (TextView) findViewById(R.id.now2_getPcpn);
 
 //        forecastHourlyLayout = (LinearLayout) findViewById(R.id.forecast_hourly_linearout);
-
+        /**
+         *主页未来三天天气预报框图
+         */
         forecastLayout = (LinearLayout) findViewById(R.id.forecast_linearout);
-
+        /**
+         *主页今日建议框图
+         */
         suggestionLayout = (LinearLayout) findViewById(R.id.suggestion_linearout);
         suggestionText = (TextView) findViewById(R.id.suggestion_text);
-
+        /**
+         *主页刷新控件
+         */
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.activity_weather_swiperefreshlayout);
         swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -194,7 +245,9 @@ public class ActivityWeather extends BaseActivity {
                 requestWeather(mlocation);
             }
         });
-
+        /**
+         *左划的抽屉控件、抽屉里的导航控件
+         */
         drawerLayout = (DrawerLayout) findViewById(R.id.activity_weather_drawerlayout);
         navigationView = (NavigationView) findViewById(R.id.activity_weather_navigationview);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -202,6 +255,7 @@ public class ActivityWeather extends BaseActivity {
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()){
                     case R.id.weather_navigation_menu_item1:
+//                        AAActivity.actionStart(MyApplication.getContext());
                         break;
                     case R.id.weather_navigation_menu_item2:
                         break;
@@ -234,6 +288,49 @@ public class ActivityWeather extends BaseActivity {
                 return true;
             }
         });
+        /**
+         *悬浮按钮控件
+         */
+        floatingActionButton = (FloatingActionButton) findViewById(R.id.activity_weather_floatingactionbutton);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mlocation != nlocation){
+                    mlocation = nlocation;
+                    requestWeather(mlocation);
+                }else {
+                    swipeRefreshLayout.setRefreshing(true);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try{
+                                Thread.sleep(2000);
+                            }catch (InterruptedException e){
+                                e.printStackTrace();
+                            }
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    requestWeather(mlocation);
+                                    swipeRefreshLayout.setRefreshing(false);
+                                }
+                            });
+                        }
+                    }).start();
+                }
+            }
+        });
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        writeProvinceAndCityIsFirst = preferences.getBoolean("writeProvinceAndCityIsFirst",true);
+        LogUtil.w(TAG, "onCreate: " + writeProvinceAndCityIsFirst);
+        if (writeProvinceAndCityIsFirst && DataSupport.findLast(MyProvince.class) == null){
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean("writeProvinceAndCityIsFirst",false);
+            editor.apply();
+            Utility.moveCsvFiles();
+            Utility.writeMyChinaProvinceAndCityToDb();
+        }
 
         List<String> permissionList = new ArrayList<>();
         if (ContextCompat.checkSelfPermission(MyApplication.getContext(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
@@ -253,8 +350,8 @@ public class ActivityWeather extends BaseActivity {
             initLocationOption();
             requestLocation();
 
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-            String bingPicString = sharedPreferences.getString("bing_pic",null);
+//            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            String bingPicString = preferences.getString("bing_pic",null);
             if (bingPicString != null){
                 Glide.with(MyApplication.getContext()).load(bingPicString).into(backgroundImage);
             }else {
@@ -263,11 +360,6 @@ public class ActivityWeather extends BaseActivity {
 
             LogUtil.i(TAG, "onCreate: " + mlocation);
             requestWeather(mlocation);
-
-//            weatherLayout.setVisibility(View.INVISIBLE);
-            LogUtil.i(TAG, "onCreate:cvbndff");
-
-            LogUtil.i(TAG, "onCreate: uioyuioyui");
         }
     }
 
@@ -303,7 +395,10 @@ public class ActivityWeather extends BaseActivity {
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)){
             drawerLayout.closeDrawers();
-        }else {
+        }else if(mlocation != nlocation){
+            mlocation = nlocation;
+            requestWeather(mlocation);
+        }else{
             super.onBackPressed();
         }
     }
@@ -545,6 +640,7 @@ public class ActivityWeather extends BaseActivity {
         public void onReceiveLocation(BDLocation location){
 //            mCountyName = location.getDistrict();
             mlocation = location.getLatitude() + "," + location.getLongitude();
+            nlocation = mlocation;
             LogUtil.w(TAG, "onReceiveLocation: " + mlocation);
             requestWeather(mlocation);
         }
