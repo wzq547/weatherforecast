@@ -25,4 +25,9 @@ public class AAActivity extends BaseActivity {
         TextView textView = (TextView) findViewById(R.id.activity_aa_text);
         textView.setText("");
     }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
 }

@@ -6,6 +6,8 @@ import com.weatherforecast.android.db.MyCity;
 import com.weatherforecast.android.db.MyCounty;
 import com.weatherforecast.android.db.MyProvince;
 
+import org.litepal.crud.DataSupport;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -108,76 +110,214 @@ public class Utility {
      * 向Myprovince、Mycity表中写数据
      */
     public static void writeMyChinaProvinceAndCityToDb(){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    File provinceCsv = new File("/data/data/com.weatherforecast.android/files/" + "province.csv"); // CSV文件路径
-                    LogUtil.e(TAG, "readMonDataCsv: " + provinceCsv);
-                    BufferedReader provincebr = new BufferedReader(new FileReader(provinceCsv));
-                    String line = "";
-                    while ((line = provincebr.readLine()) != null ) {
-                        String buffer[] = line.split(",");// 以逗号分隔
-                        MyProvince myProvince = new MyProvince();
-                        myProvince.setProvince_CN(buffer[1]);
-                        myProvince.setProvince_ID(buffer[3]);
-                        myProvince.save();
-                    }
-                    provincebr.close();
-                    LogUtil.e(TAG, "run: provincefinish");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        int iProvince = 0;
+        try {
+            File provinceCsv = new File("/data/data/com.weatherforecast.android/files/" + "province.csv"); // CSV文件路径
+            BufferedReader provinceBr = new BufferedReader(new FileReader(provinceCsv));
+            String line = "";
+            while ((line = provinceBr.readLine()) != null ) {
+                iProvince++;
             }
-        }).start();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    File cityCsv = new File("/data/data/com.weatherforecast.android/files/" + "city.csv"); // CSV文件路径
-                    BufferedReader citybr = new BufferedReader(new FileReader(cityCsv));
-                    String line = "";
-                    while ((line = citybr.readLine()) != null ) {
-                        String buffer[] = line.split(",");// 以逗号分隔
-                        MyCity myCity = new MyCity();
-                        myCity.setCity_CN(buffer[2]);
-                        myCity.setCity_ID(buffer[3]);
-                        myCity.setProvince_CN(buffer[1]);
-                        myCity.save();
+            provinceBr.close();
+            LogUtil.e(TAG, "run: provincereadfinish"+ iProvince);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        int jProvince = 0;
+        MyProvince lastProvince = DataSupport.findLast(MyProvince.class);
+        if (lastProvince == null){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File provinceCsv = new File("/data/data/com.weatherforecast.android/files/" + "province.csv"); // CSV文件路径
+                        LogUtil.e(TAG, "readMonDataCsv: " + provinceCsv);
+                        BufferedReader provincebr = new BufferedReader(new FileReader(provinceCsv));
+                        String line = "";
+                        while ((line = provincebr.readLine()) != null ) {
+                            String buffer[] = line.split(",");// 以逗号分隔
+                            MyProvince myProvince = new MyProvince();
+                            myProvince.setProvince_CN(buffer[1]);
+                            myProvince.setProvince_ID(buffer[3]);
+                            myProvince.save();
+                        }
+                        provincebr.close();
+                        LogUtil.e(TAG, "run: provincefinish");
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    citybr.close();
-                    LogUtil.e(TAG, "run: cityfinish");
-                }catch (IOException e){
-                    e.printStackTrace();
                 }
+            }).start();
+        }else if ((jProvince = lastProvince.getId()) < iProvince){
+            LogUtil.i(TAG, "onCreate: "+ jProvince);
+            final int kProvince = jProvince;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File provinceCsv = new File("/data/data/com.weatherforecast.android/files/" + "province.csv"); // CSV文件路径
+                        BufferedReader provincebr = new BufferedReader(new FileReader(provinceCsv));
+                        String line = "";
+                        for (int i = kProvince; i >= 1; i--){
+                            line = provincebr.readLine();
+                        }
+                        while ((line = provincebr.readLine()) != null) {
+                            String buffer[] = line.split(",");// 以逗号分隔
+                            MyCounty myCounty = new MyCounty();
+                            myCounty.setCounty_CN(buffer[0]);
+                            myCounty.setCounty_ID(buffer[3]);
+                            myCounty.setCity_CN(buffer[2]);
+                            myCounty.save();
+                        }
+                        provincebr.close();
+                        LogUtil.e(TAG, "run: province2finish");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }
+
+
+        int iCity = 0;
+        try {
+            File cityCsv = new File("/data/data/com.weatherforecast.android/files/" + "city.csv"); // CSV文件路径
+            BufferedReader cityBr = new BufferedReader(new FileReader(cityCsv));
+            String line = "";
+            while ((line = cityBr.readLine()) != null ) {
+                iCity++;
             }
-        }).start();
+            cityBr.close();
+            LogUtil.e(TAG, "run: cityreadfinish"+ iCity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        int jCity = 0;
+        MyCity lastCity = DataSupport.findLast(MyCity.class);
+        if (lastCity == null){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try{
+                        File cityCsv = new File("/data/data/com.weatherforecast.android/files/" + "city.csv"); // CSV文件路径
+                        BufferedReader citybr = new BufferedReader(new FileReader(cityCsv));
+                        String line = "";
+                        while ((line = citybr.readLine()) != null ) {
+                            String buffer[] = line.split(",");// 以逗号分隔
+                            MyCity myCity = new MyCity();
+                            myCity.setCity_CN(buffer[2]);
+                            myCity.setCity_ID(buffer[3]);
+                            myCity.setProvince_CN(buffer[1]);
+                            myCity.save();
+                        }
+                        citybr.close();
+                        LogUtil.e(TAG, "run: cityfinish");
+                    }catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }else if ((jCity = lastCity.getId()) < iCity){
+            LogUtil.i(TAG, "onCreate: "+ jCity);
+            final int kCity = jCity;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File cityCsv = new File("/data/data/com.weatherforecast.android/files/" + "city.csv"); // CSV文件路径
+                        BufferedReader citybr = new BufferedReader(new FileReader(cityCsv));
+                        String line = "";
+                        for (int i = kCity; i >= 1; i--){
+                            line = citybr.readLine();
+                        }
+                        while ((line = citybr.readLine()) != null) {
+                            String buffer[] = line.split(",");// 以逗号分隔
+                            MyCounty myCounty = new MyCounty();
+                            myCounty.setCounty_CN(buffer[0]);
+                            myCounty.setCounty_ID(buffer[3]);
+                            myCounty.setCity_CN(buffer[2]);
+                            myCounty.save();
+                        }
+                        citybr.close();
+                        LogUtil.e(TAG, "run: cityfinish");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }
     }
     /**
      * 向Mycounty表中写数据
      */
     public static void writeMyChinaCountyToDb() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    File countyCsv = new File("/data/data/com.weatherforecast.android/files/" + "county.csv"); // CSV文件路径
-                    BufferedReader countybr = new BufferedReader(new FileReader(countyCsv));
-                    String line = "";
-                    while ((line = countybr.readLine()) != null) {
-                        String buffer[] = line.split(",");// 以逗号分隔
-                        MyCounty myCounty = new MyCounty();
-                        myCounty.setCounty_CN(buffer[0]);
-                        myCounty.setCounty_ID(buffer[3]);
-                        myCounty.setCity_CN(buffer[2]);
-                        myCounty.save();
-                    }
-                    countybr.close();
-                    LogUtil.e(TAG, "run: countyfinish");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        int i = 0;
+        try {
+            File countyCsv = new File("/data/data/com.weatherforecast.android/files/" + "county.csv"); // CSV文件路径
+            BufferedReader countyBr = new BufferedReader(new FileReader(countyCsv));
+            String line = "";
+            while ((line = countyBr.readLine()) != null ) {
+                i++;
             }
-        }).start();
+            countyBr.close();
+            LogUtil.e(TAG, "run: provincefinish"+ i);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        int j = 0;
+        MyCounty last = DataSupport.findLast(MyCounty.class);
+        if (last == null){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File countyCsv = new File("/data/data/com.weatherforecast.android/files/" + "county.csv"); // CSV文件路径
+                        BufferedReader countybr = new BufferedReader(new FileReader(countyCsv));
+                        String line = "";
+                        while ((line = countybr.readLine()) != null) {
+                            String buffer[] = line.split(",");// 以逗号分隔
+                            MyCounty myCounty = new MyCounty();
+                            myCounty.setCounty_CN(buffer[0]);
+                            myCounty.setCounty_ID(buffer[3]);
+                            myCounty.setCity_CN(buffer[2]);
+                            myCounty.save();
+                        }
+                        countybr.close();
+                        LogUtil.e(TAG, "run: countyfinish");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }else if ((j = last.getId()) < i){
+            LogUtil.i(TAG, "onCreate: "+ j);
+            final int k = j;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File countyCsv = new File("/data/data/com.weatherforecast.android/files/" + "county.csv"); // CSV文件路径
+                        BufferedReader countybr = new BufferedReader(new FileReader(countyCsv));
+                        String line = "";
+                        for (int i = k; i >= 1; i--){
+                            line = countybr.readLine();
+                        }
+                        while ((line = countybr.readLine()) != null) {
+                            String buffer[] = line.split(",");// 以逗号分隔
+                            MyCounty myCounty = new MyCounty();
+                            myCounty.setCounty_CN(buffer[0]);
+                            myCounty.setCounty_ID(buffer[3]);
+                            myCounty.setCity_CN(buffer[2]);
+                            myCounty.save();
+                        }
+                        countybr.close();
+                        LogUtil.e(TAG, "run: countyfinish");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }
     }
 }

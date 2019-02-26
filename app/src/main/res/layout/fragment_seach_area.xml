@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/fragment_seach_area_title_framelayout"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary">
+
+        <EditText
+            android:id="@+id/fragment_seach_area_title_edittext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="35dp"
+            android:layout_marginLeft="45dp"
+            android:layout_gravity="center_vertical|left|start"
+            android:textColor="#fff"
+            android:textSize="20sp"
+            android:maxLines="1"
+            android:hint="请在此输入要搜索的地区名"
+            android:textColorHint="#969696"
+            android:textCursorDrawable="@drawable/cursor_color"
+            android:theme="@style/MyEditText"/>
+
+        <Button
+            android:id="@+id/fragment_seach_area_title_back"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginLeft="10dp"
+            android:layout_gravity="center_vertical|start|left"
+            android:background="@drawable/button_background"/>
+
+        <Button
+            android:id="@+id/fragment_seach_area_title_seach"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginRight="10dp"
+            android:layout_gravity="center_vertical|end|right"
+            android:background="@drawable/ic_search" />
+
+    </FrameLayout>
+
+    <ListView
+        android:id="@+id/fragment_seach_area_title_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/fragment_seach_area_title_framelayout"
+        android:background="@color/colorPrimary"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fragment_seach_area_floatingActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_back"/>
+
+</RelativeLayout>

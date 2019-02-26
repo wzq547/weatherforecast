@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#fff">
@@ -21,13 +20,22 @@
             android:textSize="20sp"/>
 
         <Button
-            android:id="@+id/fragment_choose_area_title_button"
+            android:id="@+id/fragment_choose_area_title_back"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:layout_marginLeft="10dp"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
             android:background="@drawable/ic_back"/>
+
+        <Button
+            android:id="@+id/fragment_choose_area_title_seach"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginRight="10dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/ic_search"/>
 
     </RelativeLayout>
 

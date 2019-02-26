@@ -20,7 +20,6 @@ public class ActivityChooseArea extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose_area);
-
     }
 
     public void ReBackCountyNameToActivityWeather(String countyName){

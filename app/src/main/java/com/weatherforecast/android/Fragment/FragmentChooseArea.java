@@ -1,12 +1,12 @@
 package com.weatherforecast.android.Fragment;
 
 import android.app.ProgressDialog;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +45,7 @@ public class FragmentChooseArea extends Fragment {
     private ProgressDialog progressDialog;
     private TextView titleText;
     private Button backButton;
+    private Button seachButton;
     private ListView listView;
     private ArrayAdapter<String> adapter;
     private List<String> dataList = new ArrayList<>();
@@ -76,21 +77,11 @@ public class FragmentChooseArea extends Fragment {
      */
     private int currentLevel;
 
-    private boolean writeCountyIsFirst;
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        writeCountyIsFirst = preferences.getBoolean("writeCountyIsFirst",true);
-        if (writeCountyIsFirst){
-            LogUtil.e(TAG, "onCreate: isFrist:"+ writeCountyIsFirst);
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putBoolean("writeCountyIsFirst",false);
-            editor.apply();
-            Utility.writeMyChinaCountyToDb();
-        }
-        LogUtil.e(TAG, "onCreate: "+ writeCountyIsFirst);
+        currentLevel = LEVEL_PROVINCE;
+        Utility.writeMyChinaCountyToDb();
     }
 
     @Nullable
@@ -98,7 +89,8 @@ public class FragmentChooseArea extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_choose_area,container,false);
         titleText = (TextView) view.findViewById(R.id.fragment_choose_area_title_text);
-        backButton = (Button) view.findViewById(R.id.fragment_choose_area_title_button);
+        backButton = (Button) view.findViewById(R.id.fragment_choose_area_title_back);
+        seachButton = (Button) view.findViewById(R.id.fragment_choose_area_title_seach);
         listView = (ListView) view.findViewById(R.id.fragment_choose_area_title_list);
         adapter = new ArrayAdapter<String>(MyApplication.getContext(),R.layout.list_item1,dataList);
         listView.setAdapter(adapter);
@@ -158,7 +150,25 @@ public class FragmentChooseArea extends Fragment {
                 }
             }
         });
-        queryProvinces();
+        seachButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.activity_choose_area_framelayout,new FragmentSeachArea());
+                fragmentTransaction.addToBackStack(null);
+                fragmentTransaction.commit();
+            }
+        });
+        if (currentLevel == LEVEL_PROVINCE){
+            queryProvinces();
+        }
+        if (currentLevel == LEVEL_CITY){
+            queryCities();
+        }
+        if (currentLevel == LEVEL_COUNTY){
+            queryCounties();
+        }
     }
     /**
      * 查询全国所有的省，优先从数据库查询

@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -37,12 +38,9 @@ import com.weatherforecast.android.CollectorActivity;
 import com.weatherforecast.android.LogUtil;
 import com.weatherforecast.android.MyApplication;
 import com.weatherforecast.android.R;
-import com.weatherforecast.android.db.MyProvince;
 import com.weatherforecast.android.service.AutoUpdateService;
 import com.weatherforecast.android.util.HttpUtil;
 import com.weatherforecast.android.util.Utility;
-
-import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,6 +74,10 @@ public class ActivityWeather extends BaseActivity {
      * 百度定位客户端
      */
     public LocationClient mLocationClient = null;
+    /**
+     * 此活动的全局View
+     */
+    private View view;
     /**
      *标题栏ToolBar
      */
@@ -129,10 +131,6 @@ public class ActivityWeather extends BaseActivity {
      */
     public String mlocation = null;
     public String nlocation = null;
-    /**
-     * 是否第一次启动
-     */
-    private boolean writeProvinceAndCityIsFirst;
 
     /**
      * 处理从上一个活动返回的数据
@@ -182,18 +180,20 @@ public class ActivityWeather extends BaseActivity {
         mLocationClient.registerLocationListener(new MyLocationListener());
         setContentView(R.layout.activity_weather);
 
-        final View view = getWindow().getDecorView().findViewById(R.id.activity_weather);
+        /**
+         * 此活动的全局View
+         */
+        view = getWindow().getDecorView().findViewById(R.id.activity_weather);
         /**
          *标题栏ToolBar
          */
         collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.activity_weather_collapsingtoolbatlayout);
-        collapsingToolbarLayout.setTitle("");
         toolbar = (Toolbar) findViewById(R.id.activity_weather_toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_home);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
         }
         toolBarImageView = (ImageView) findViewById(R.id.activity_weather_toobarimageview);
         Glide.with(MyApplication.getContext()).load(R.drawable.bg).into(toolBarImageView);
@@ -321,16 +321,8 @@ public class ActivityWeather extends BaseActivity {
             }
         });
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        writeProvinceAndCityIsFirst = preferences.getBoolean("writeProvinceAndCityIsFirst",true);
-        LogUtil.w(TAG, "onCreate: " + writeProvinceAndCityIsFirst);
-        if (writeProvinceAndCityIsFirst && DataSupport.findLast(MyProvince.class) == null){
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putBoolean("writeProvinceAndCityIsFirst",false);
-            editor.apply();
-            Utility.moveCsvFiles();
-            Utility.writeMyChinaProvinceAndCityToDb();
-        }
+        Utility.moveCsvFiles();
+        Utility.writeMyChinaProvinceAndCityToDb();
 
         List<String> permissionList = new ArrayList<>();
         if (ContextCompat.checkSelfPermission(MyApplication.getContext(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
@@ -350,7 +342,7 @@ public class ActivityWeather extends BaseActivity {
             initLocationOption();
             requestLocation();
 
-//            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
             String bingPicString = preferences.getString("bing_pic",null);
             if (bingPicString != null){
                 Glide.with(MyApplication.getContext()).load(bingPicString).into(backgroundImage);
@@ -416,7 +408,14 @@ public class ActivityWeather extends BaseActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(MyApplication.getContext(),"获取天气信息失败，aaa请检查网络连接",Toast.LENGTH_SHORT).show();
+                            Snackbar.make(view,"未成功获取定位，请重启程序以重试",Snackbar.LENGTH_SHORT)
+                                    .setAction("重启", new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            CollectorActivity.finishAll();
+                                            ActivityWeather.actionStart(MyApplication.getContext());
+                                        }
+                                    }).show();
                             swipeRefreshLayout.setRefreshing(false);
                             mLocationClient.stop();
                         }
@@ -425,7 +424,6 @@ public class ActivityWeather extends BaseActivity {
 
                 @Override
                 public void onSuccess(List<interfaces.heweather.com.interfacesmodule.bean.weather.Weather> list) {
-//                collapsingToolbarLayout.setTitle(countyName);
                     final List<interfaces.heweather.com.interfacesmodule.bean.weather.Weather> weatherList = list;
                     runOnUiThread(new Runnable() {
                         @Override
@@ -545,7 +543,7 @@ public class ActivityWeather extends BaseActivity {
             brfText.setText(lifestyleBase.getBrf());
             suggestionLayout.addView(view);
         }
-        suggestionText.setText(mWeather.getLifestyle().get(1).getTxt());
+        suggestionText.setText(mWeather.getLifestyle().get(0).getTxt());
 //      weatherLayout.setVisibility(View.VISIBLE);
 
         Intent intent = new Intent(MyApplication.getContext(), AutoUpdateService.class);

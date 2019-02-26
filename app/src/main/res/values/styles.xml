@@ -9,5 +9,9 @@
     </style>
 
     <style name="FitsSystemWindowsTheme" parent="AppTheme"/>
+    <style name="MyEditText" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">#0fff</item>
+        <item name="colorControlActivated">#0fff</item>
+    </style>
 
 </resources>

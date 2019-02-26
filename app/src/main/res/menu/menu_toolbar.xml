@@ -4,7 +4,7 @@
     <item
         android:id="@+id/menu_toolbar_item1"
         android:title="choosearea"
-        android:icon="@drawable/ic_homemenu"
+        android:icon="@drawable/ic_more"
         app:showAsAction="always"/>
 
 </menu>
