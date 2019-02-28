@@ -16,25 +16,4 @@
         android:textColor="#fff"
         android:background="@color/colorPrimary" />
 
-    <TextView
-        android:id="@+id/list_search_area_adapter_parentCity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceListItemSmall"
-        android:minHeight="?android:attr/listPreferredItemHeightSmall"
-        android:gravity="center"
-        android:layout_marginLeft="16dp"
-        android:textColor="#fff"
-        android:background="@color/colorPrimary" />
-
-    <TextView
-        android:id="@+id/list_search_area_adapter_location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceListItemSmall"
-        android:minHeight="?android:attr/listPreferredItemHeightSmall"
-        android:gravity="center"
-        android:layout_marginLeft="16dp"
-        android:textColor="#fff"
-        android:background="@color/colorPrimary" />
 </LinearLayout>

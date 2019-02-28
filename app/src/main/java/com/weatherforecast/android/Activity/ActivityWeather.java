@@ -5,12 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -23,31 +23,36 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.baidu.location.BDAbstractLocationListener;
-import com.baidu.location.BDLocation;
-import com.baidu.location.LocationClient;
-import com.baidu.location.LocationClientOption;
 import com.bumptech.glide.Glide;
 import com.weatherforecast.android.BaseActivity;
 import com.weatherforecast.android.CollectorActivity;
 import com.weatherforecast.android.LogUtil;
 import com.weatherforecast.android.MyApplication;
 import com.weatherforecast.android.R;
-import com.weatherforecast.android.service.AutoUpdateService;
+import com.weatherforecast.android.SearchArea.LikedAreaList;
+import com.weatherforecast.android.SearchArea.LikedAreaListAdapter;
+import com.weatherforecast.android.db.MyLikedCounty;
 import com.weatherforecast.android.util.HttpUtil;
 import com.weatherforecast.android.util.Utility;
+
+import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import interfaces.heweather.com.interfacesmodule.bean.search.Search;
 import interfaces.heweather.com.interfacesmodule.bean.weather.Weather;
 import interfaces.heweather.com.interfacesmodule.bean.weather.forecast.ForecastBase;
+import interfaces.heweather.com.interfacesmodule.bean.weather.hourly.HourlyBase;
 import interfaces.heweather.com.interfacesmodule.bean.weather.lifestyle.LifestyleBase;
 import interfaces.heweather.com.interfacesmodule.view.HeWeather;
 import okhttp3.Call;
@@ -70,10 +75,6 @@ public class ActivityWeather extends BaseActivity {
         context.startActivity(intent);
     }
 
-    /**
-     * 百度定位客户端
-     */
-    public LocationClient mLocationClient = null;
     /**
      * 此活动的全局View
      */
@@ -105,10 +106,12 @@ public class ActivityWeather extends BaseActivity {
     private TextView now2getFi;
     private TextView now2getHum;
     private TextView now2getPcpn;
-
-//    private LinearLayout forecastHourlyLayout;
     /**
-     *主页未来三天天气预报框图
+     * 主页未来24小时天气预报框图
+     */
+    private LinearLayout forecastHourlyLayout;
+    /**
+     *主页未来七天天气预报框图
      */
     private LinearLayout forecastLayout;
     /**
@@ -121,7 +124,11 @@ public class ActivityWeather extends BaseActivity {
      */
     public SwipeRefreshLayout swipeRefreshLayout;
     public DrawerLayout drawerLayout;
-    private NavigationView navigationView;
+    private ListView likedListView;
+    private LikedAreaListAdapter adapter;
+    private List<MyLikedCounty> myLikedCountyList;
+    private List<LikedAreaList> dataList = new ArrayList<>();
+    private Button settingButton;
     /**
      *悬浮按钮控件
      */
@@ -130,7 +137,11 @@ public class ActivityWeather extends BaseActivity {
      *地址
      */
     public String mlocation = null;
-    public String nlocation = null;
+    public String flocation = null;
+    /**
+     * 返回的天气表
+     */
+    private List<Weather> backWeatherList;
 
     /**
      * 处理从上一个活动返回的数据
@@ -176,10 +187,7 @@ public class ActivityWeather extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mLocationClient = new LocationClient(MyApplication.getContext());
-        mLocationClient.registerLocationListener(new MyLocationListener());
         setContentView(R.layout.activity_weather);
-
         /**
          * 此活动的全局View
          */
@@ -193,7 +201,7 @@ public class ActivityWeather extends BaseActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_home);
         }
         toolBarImageView = (ImageView) findViewById(R.id.activity_weather_toobarimageview);
         Glide.with(MyApplication.getContext()).load(R.drawable.bg).into(toolBarImageView);
@@ -218,10 +226,12 @@ public class ActivityWeather extends BaseActivity {
         now2getFi = (TextView) findViewById(R.id.now2_getFI);
         now2getHum = (TextView) findViewById(R.id.now2_getHum);
         now2getPcpn = (TextView) findViewById(R.id.now2_getPcpn);
-
-//        forecastHourlyLayout = (LinearLayout) findViewById(R.id.forecast_hourly_linearout);
         /**
-         *主页未来三天天气预报框图
+         *主页未来24小时天气预报框图
+         */
+        forecastHourlyLayout = (LinearLayout) findViewById(R.id.forecast_hourly_linearout);
+        /**
+         *主页未来七天天气预报框图
          */
         forecastLayout = (LinearLayout) findViewById(R.id.forecast_linearout);
         /**
@@ -238,54 +248,45 @@ public class ActivityWeather extends BaseActivity {
             @Override
             public void onRefresh() {
                 if (mlocation == null){
-                    requestLocation();
-                    LogUtil.i(TAG, "onRefresh requestLocation: ");
+                    swipeRefreshLayout.setRefreshing(false);
+                    Snackbar.make(view,"还未获取定位信息，无法刷新天气信息，请检查网络后重启程序重试",Snackbar.LENGTH_INDEFINITE)
+                            .setAction("重启", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    CollectorActivity.finishAll();
+                                    ActivityWeather.actionStart(ActivityWeather.this);
+                                }
+                            }).show();
+                }else {
+                    LogUtil.w(TAG, "onRefresh: " + mlocation);
+                    requestWeather(mlocation);
                 }
-                LogUtil.w(TAG, "onRefresh: " + mlocation);
-                requestWeather(mlocation);
             }
         });
         /**
-         *左划的抽屉控件、抽屉里的导航控件
+         *左划的抽屉控件&抽屉里的控件
          */
         drawerLayout = (DrawerLayout) findViewById(R.id.activity_weather_drawerlayout);
-        navigationView = (NavigationView) findViewById(R.id.activity_weather_navigationview);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+        likedListView = (ListView) findViewById(R.id.activity_weather_drawerlayout_likedlist);
+        initDataList();
+        adapter = new LikedAreaListAdapter(this,R.layout.list_liked_area_adapter,dataList);
+        likedListView.setAdapter(adapter);
+        likedListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                switch (item.getItemId()){
-                    case R.id.weather_navigation_menu_item1:
-//                        AAActivity.actionStart(MyApplication.getContext());
-                        break;
-                    case R.id.weather_navigation_menu_item2:
-                        break;
-                    case R.id.weather_navigation_menu_item3:
-                        break;
-                    case R.id.weather_navigation_menu_item4:
-                        break;
-                    case R.id.weather_navigation_menu_item5:
-                        break;
-                    case R.id.weather_navigation_menu_item6:
-                        break;
-                    case R.id.weather_navigation_menu_item7:
-                        break;
-                    case R.id.weather_navigation_menu_item8:
-                        break;
-                    case R.id.weather_navigation_menu_item9:
-                        break;
-                    case R.id.weather_navigation_menu_item10:
-                        break;
-                    case R.id.weather_navigation_menu_item11:
-                        break;
-                    case R.id.weather_navigation_menu_item12:
-                        break;
-                    case R.id.weather_navigation_menu_item13:
-                        drawerLayout.closeDrawers();
-                        break;
-                    default:
-                        break;
-                }
-                return true;
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                LikedAreaList likedAreaList = dataList.get(position);
+                drawerLayout.closeDrawers();
+                swipeRefreshLayout.setRefreshing(true);
+                mlocation = likedAreaList.getCid();
+                requestWeather(mlocation);
+            }
+        });
+        settingButton = (Button) findViewById(R.id.activity_weather_drawerlayout_Setupbutton);
+        settingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ActivitySetting.actionStart(ActivityWeather.this);
+                drawerLayout.closeDrawers();
             }
         });
         /**
@@ -295,53 +296,72 @@ public class ActivityWeather extends BaseActivity {
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mlocation != nlocation){
-                    mlocation = nlocation;
-                    requestWeather(mlocation);
+                if (backWeatherList == null){
+
                 }else {
-                    swipeRefreshLayout.setRefreshing(true);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try{
-                                Thread.sleep(2000);
-                            }catch (InterruptedException e){
-                                e.printStackTrace();
-                            }
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    requestWeather(mlocation);
-                                    swipeRefreshLayout.setRefreshing(false);
-                                }
-                            });
+                    if (DataSupport.where("County_ID = ?",String.valueOf(backWeatherList.get(0).getBasic().getCid())).find(MyLikedCounty.class).isEmpty()){
+                        MyLikedCounty myLikedCounty = new MyLikedCounty();
+                        myLikedCounty.setProvince_CN(backWeatherList.get(0).getBasic().getAdmin_area());
+                        myLikedCounty.setCity_CN(backWeatherList.get(0).getBasic().getParent_city());
+                        myLikedCounty.setCounty_CN(backWeatherList.get(0).getBasic().getLocation());
+                        myLikedCounty.setCounty_ID(backWeatherList.get(0).getBasic().getCid());
+                        myLikedCounty.save();
+                        floatingActionButton.setImageResource(R.drawable.ic_liked);
+                    }else if (!DataSupport.where("County_ID = ?",String.valueOf(backWeatherList.get(0).getBasic().getCid())).find(MyLikedCounty.class).isEmpty()){
+                        DataSupport.deleteAll(MyLikedCounty.class,"County_ID = ?",String.valueOf(backWeatherList.get(0).getBasic().getCid()));
+                        floatingActionButton.setImageResource(R.drawable.ic_like);
+                    }
+                    myLikedCountyList = DataSupport.findAll(MyLikedCounty.class);
+                    if (myLikedCountyList.size() > 0){
+                        likedListView.setVisibility(View.VISIBLE);
+                        dataList.clear();
+                        for (MyLikedCounty myLikedCounty1 : myLikedCountyList){
+                            dataList.add(new LikedAreaList(myLikedCounty1.getCounty_ID(),myLikedCounty1.getProvince_CN(),myLikedCounty1.getCity_CN(),myLikedCounty1.getCounty_CN()));
                         }
-                    }).start();
+                        adapter.notifyDataSetChanged();
+                        likedListView.setSelection(0);
+                    }else if (myLikedCountyList.size() == 0){
+                        likedListView.setVisibility(View.INVISIBLE);
+                        dataList.clear();
+                        adapter.notifyDataSetChanged();
+                        likedListView.setSelection(0);
+                    }
                 }
             }
         });
 
         Utility.moveCsvFiles();
         Utility.writeMyChinaProvinceAndCityToDb();
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        backWeatherList = null;
 
         List<String> permissionList = new ArrayList<>();
-        if (ContextCompat.checkSelfPermission(MyApplication.getContext(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
-            permissionList.add(Manifest.permission.READ_PHONE_STATE);
-        }
         if (ContextCompat.checkSelfPermission(MyApplication.getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        }
-        if (ContextCompat.checkSelfPermission(MyApplication.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }
         if (!permissionList.isEmpty()){
             String [] permissions = permissionList.toArray(new String [permissionList.size()]);
             ActivityCompat.requestPermissions(ActivityWeather.this,permissions,1);
-        }else {
-            LogUtil.i(TAG, "onCreate:asdfasdfaf ");
-            initLocationOption();
-            requestLocation();
-
+        }else if (connectivityManager.getActiveNetworkInfo() != null){
+            HeWeather.getSearch(this, new HeWeather.OnResultSearchBeansListener() {
+                @Override
+                public void onError(Throwable throwable) {
+                    Snackbar.make(view,"获取定位信息失败，请重试",Snackbar.LENGTH_INDEFINITE)
+                            .setAction("重试", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    CollectorActivity.finishAll();
+                                    ActivityWeather.actionStart(ActivityWeather.this);
+                                }
+                            }).show();
+                }
+                @Override
+                public void onSuccess(Search search) {
+                    flocation = search.getBasic().get(0).getCid();
+                    mlocation = search.getBasic().get(0).getCid();
+                    requestWeather(mlocation);
+                }
+            });
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
             String bingPicString = preferences.getString("bing_pic",null);
             if (bingPicString != null){
@@ -349,15 +369,20 @@ public class ActivityWeather extends BaseActivity {
             }else {
                 loadBingPic();
             }
-
-            LogUtil.i(TAG, "onCreate: " + mlocation);
-            requestWeather(mlocation);
+        }else {
+            Snackbar.make(view,"您未连接到任何网络，请连接网络后重启程序",Snackbar.LENGTH_INDEFINITE)
+                    .setAction("重启", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            CollectorActivity.finishAll();
+                            ActivityWeather.actionStart(ActivityWeather.this);
+                        }
+                    }).show();
         }
     }
 
     @Override
     protected void onStart() {
-        LogUtil.w(TAG, "onStart: " + mlocation);
         requestWeather(mlocation);
         super.onStart();
     }
@@ -380,15 +405,14 @@ public class ActivityWeather extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mLocationClient.stop();
     }
 
     @Override
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)){
             drawerLayout.closeDrawers();
-        }else if(mlocation != nlocation){
-            mlocation = nlocation;
+        }else if(mlocation != flocation){
+            mlocation = flocation;
             requestWeather(mlocation);
         }else{
             super.onBackPressed();
@@ -400,7 +424,7 @@ public class ActivityWeather extends BaseActivity {
      */
     public void requestWeather(final String countyName){
         if (countyName == null){
-
+            backWeatherList = null;
         }else {
             HeWeather.getWeather(MyApplication.getContext(), countyName, new HeWeather.OnResultWeatherDataListBeansListener() {
                 @Override
@@ -417,24 +441,21 @@ public class ActivityWeather extends BaseActivity {
                                         }
                                     }).show();
                             swipeRefreshLayout.setRefreshing(false);
-                            mLocationClient.stop();
                         }
                     });
                 }
 
                 @Override
                 public void onSuccess(List<interfaces.heweather.com.interfacesmodule.bean.weather.Weather> list) {
-                    final List<interfaces.heweather.com.interfacesmodule.bean.weather.Weather> weatherList = list;
+                    backWeatherList = list;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (weatherList.size() > 0){
-                                mLocationClient.stop();
-                                showWeatherInfo(weatherList.get(0));
+                            if (backWeatherList.size() > 0){
+                                showWeatherInfo(backWeatherList.get(0));
                                 swipeRefreshLayout.setRefreshing(false);
                             }else {
-                                mLocationClient.stop();
-                                Toast.makeText(MyApplication.getContext(),"获取天气信息失败，ddd请检查网络连接",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MyApplication.getContext(),"获取天气信息失败，请检查网络连接",Toast.LENGTH_SHORT).show();
                                 swipeRefreshLayout.setRefreshing(false);
                             }
                         }
@@ -460,6 +481,22 @@ public class ActivityWeather extends BaseActivity {
         now2getFi.setText(mWeather.getNow().getFl() + "℃");
         now2getHum.setText(mWeather.getNow().getHum());
         now2getPcpn.setText(mWeather.getNow().getPcpn());
+        //hourly_forecast
+        forecastHourlyLayout.removeAllViews();
+        for (HourlyBase hourlyBase : mWeather.getHourly()){
+            View view = LayoutInflater.from(MyApplication.getContext()).inflate(R.layout.forecasthourly_item,forecastHourlyLayout,false);
+            TextView getData = (TextView) view.findViewById(R.id.forecast_hourly_item_getData);
+            TextView getTmp = (TextView) view.findViewById(R.id.forecast_hourly_item_getTmp);
+            TextView getPop = (TextView) view.findViewById(R.id.forecast_hourly_item_getPop);
+            TextView getCond_txt_d = (TextView) view.findViewById(R.id.forecast_hourly_item_getCond_txt_d);
+            ImageView getCond_code_d = (ImageView) view.findViewById(R.id.forecast_hourly_item_getCond_code_d);
+            getData.setText(hourlyBase.getTime());
+            getTmp.setText(hourlyBase.getTmp() + "℃");
+            getPop.setText(hourlyBase.getPop() + "%");
+            getCond_txt_d.setText(hourlyBase.getCond_txt());
+            Glide.with(MyApplication.getContext()).load("https://cdn.heweather.com/cond_icon/" + hourlyBase.getCond_code() + ".png").into(getCond_code_d);
+            forecastHourlyLayout.addView(view);
+        }
         //daily_forecast
         forecastLayout.removeAllViews();
         for (ForecastBase dailyForecast : mWeather.getDaily_forecast()){
@@ -544,10 +581,14 @@ public class ActivityWeather extends BaseActivity {
             suggestionLayout.addView(view);
         }
         suggestionText.setText(mWeather.getLifestyle().get(0).getTxt());
-//      weatherLayout.setVisibility(View.VISIBLE);
-
-        Intent intent = new Intent(MyApplication.getContext(), AutoUpdateService.class);
-        startService(intent);
+        /**
+         * 根据当前页面显示的地区设置悬浮按钮的图标
+         */
+        if (DataSupport.where("County_ID = ?",String.valueOf(backWeatherList.get(0).getBasic().getCid())).find(MyLikedCounty.class).isEmpty()){
+            floatingActionButton.setImageResource(R.drawable.ic_like);
+        }else if (!DataSupport.where("County_ID = ?",String.valueOf(backWeatherList.get(0).getBasic().getCid())).find(MyLikedCounty.class).isEmpty()){
+            floatingActionButton.setImageResource(R.drawable.ic_liked);
+        }
     }
     /**
      * 获取必应每日一图
@@ -587,11 +628,9 @@ public class ActivityWeather extends BaseActivity {
                         if (result != PackageManager.PERMISSION_GRANTED){
                             Toast.makeText(MyApplication.getContext(),"必须同意所有权限才能使用本程序",Toast.LENGTH_SHORT).show();
                             CollectorActivity.finishAll();
-                            ActivityWeather.actionStart(ActivityWeather.this);
                             return;
                         }
                     }
-                    requestLocation();
                 }else {
                     Toast.makeText(MyApplication.getContext(),"发生未知错误",Toast.LENGTH_SHORT).show();
                     CollectorActivity.finishAll();
@@ -603,44 +642,21 @@ public class ActivityWeather extends BaseActivity {
         }
     }
     /**
-     * 初始化定位选项
+     * 初始化dataList
      */
-    private void initLocationOption() {
-        LocationClientOption locationOption = new LocationClientOption();
-//        locationOption.setScanSpan(1000);//可选，默认0，即仅定位一次，设置发起连续定位请求的间隔需要大于等于1000ms才是有效的
-        locationOption.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
-        locationOption.setLocationMode(LocationClientOption.LocationMode.Battery_Saving);//设置定位模式
-//        locationOption.setCoorType("bd0911");
-//        locationOption.setNeedDeviceDirect(false);//可选，设置是否需要设备方向结果
-//        locationOption.setLocationNotify(true);//可选，默认false，设置是否当gps有效时按照1S1次频率输出GPS结果
-        locationOption.setIgnoreKillProcess(false);//可选，默认true，定位SDK内部是一个SERVICE，并放到了独立进程，设置是否在stop的时候杀死这个进程，默认不杀死
-//        locationOption.setIsNeedLocationDescribe(true);//可选，默认false，设置是否需要位置语义化结果，可以在BDLocation.getLocationDescribe里得到，结果类似于“在北京天安门附近”
-//        locationOption.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
-//        locationOption.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
-//        locationOption.setOpenGps(true);//可选，默认false，设置是否开启Gps定位
-//        locationOption.setIsNeedAltitude(true);//可选，默认false，设置定位时是否需要海拔信息，默认不需要，除基础定位版本都可用
-//        locationOption.setOpenAutoNotifyMode();//设置打开自动回调位置模式，该开关打开后，期间只要定位SDK检测到位置变化就会主动回调给开发者，该模式下开发者无需再关心定位间隔是多少，定位SDK本身发现位置变化就会及时回调给开发者
-//        locationOption.setOpenAutoNotifyMode(3000,1, LocationClientOption.LOC_SENSITIVITY_HIGHT);//设置打开自动回调位置模式，该开关打开后，期间只要定位SDK检测到位置变化就会主动回调给开发者
-        mLocationClient.setLocOption(locationOption);
-    }
-
-    /**
-     * 获取定位信息
-     */
-    private void requestLocation(){
-        mLocationClient.start();
-    }
-    /**
-     * 百度定位信息监听器
-     */
-    public class MyLocationListener extends BDAbstractLocationListener {
-        @Override
-        public void onReceiveLocation(BDLocation location){
-//            mCountyName = location.getDistrict();
-            mlocation = location.getLatitude() + "," + location.getLongitude();
-            nlocation = mlocation;
-            LogUtil.w(TAG, "onReceiveLocation: " + mlocation);
-            requestWeather(mlocation);
+    private void initDataList(){
+        myLikedCountyList = DataSupport.findAll(MyLikedCounty.class);
+        if (myLikedCountyList.size() > 0){
+            likedListView.setVisibility(View.VISIBLE);
+            dataList.clear();
+            for (MyLikedCounty myLikedCounty1 : myLikedCountyList){
+                dataList.add(new LikedAreaList(myLikedCounty1.getCounty_ID(),myLikedCounty1.getProvince_CN(),myLikedCounty1.getCity_CN(),myLikedCounty1.getCounty_CN()));
+            }
+            likedListView.setSelection(0);
+        }else if (myLikedCountyList.size() == 0){
+            likedListView.setVisibility(View.INVISIBLE);
+            dataList.clear();
+            likedListView.setSelection(0);
         }
     }
 }

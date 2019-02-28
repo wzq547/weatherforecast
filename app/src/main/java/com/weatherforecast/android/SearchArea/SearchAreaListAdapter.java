@@ -30,10 +30,6 @@ public class SearchAreaListAdapter extends ArrayAdapter<com.weatherforecast.andr
 
         TextView adminArea;
 
-        TextView parentCity;
-
-        TextView location;
-
     }
 
     @Override
@@ -45,17 +41,13 @@ public class SearchAreaListAdapter extends ArrayAdapter<com.weatherforecast.andr
             view = LayoutInflater.from(getContext()).inflate(resourceID,parent,false);
             viewHolder = new ViewHolder();
             viewHolder.adminArea = (TextView) view.findViewById(R.id.list_search_area_adapter_adminArea);
-            viewHolder.parentCity = (TextView) view.findViewById(R.id.list_search_area_adapter_parentCity);
-            viewHolder.location = (TextView) view.findViewById(R.id.list_search_area_adapter_location);
             view.setTag(viewHolder);
         }
         else {
             view = convertView;
             viewHolder = (ViewHolder) view.getTag();
         }
-        viewHolder.adminArea.setText(searchAreaList.getAdmin_area());
-        viewHolder.parentCity.setText(searchAreaList.getParent_city());
-        viewHolder.location.setText(searchAreaList.getLocation());
+        viewHolder.adminArea.setText(searchAreaList.getAdmin_area() + "，" + searchAreaList.getParent_city() + "，" + searchAreaList.getLocation());
         return view;
     }
 }

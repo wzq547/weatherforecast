@@ -11,20 +11,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.weatherforecast.android.Activity.ActivityChooseArea;
+import com.weatherforecast.android.AsyncTask.TaskLoadCountyToDb;
 import com.weatherforecast.android.LogUtil;
 import com.weatherforecast.android.MyApplication;
 import com.weatherforecast.android.R;
+import com.weatherforecast.android.SearchArea.ChooseAreaListAdapter;
 import com.weatherforecast.android.db.MyCity;
 import com.weatherforecast.android.db.MyCounty;
 import com.weatherforecast.android.db.MyProvince;
-import com.weatherforecast.android.util.Utility;
+import com.weatherforecast.android.util.ShowProgressDialogListener;
 
 import org.litepal.crud.DataSupport;
 
@@ -47,7 +48,7 @@ public class FragmentChooseArea extends Fragment {
     private Button backButton;
     private Button seachButton;
     private ListView listView;
-    private ArrayAdapter<String> adapter;
+    private ChooseAreaListAdapter adapter;
     private List<String> dataList = new ArrayList<>();
 
     private FloatingActionButton floatingActionButton;
@@ -77,11 +78,38 @@ public class FragmentChooseArea extends Fragment {
      */
     private int currentLevel;
 
+    /**
+     * 进度对话框
+     */
+    private ShowProgressDialogListener showProgressDialogListener = new ShowProgressDialogListener() {
+        @Override
+        public void showProgressDialog(int current,int total) {
+            progressDialog.setTitle("正在加载全国城市数据");
+            progressDialog.setMessage("本过程不消耗流量");
+            progressDialog.setMax(total);
+            progressDialog.setProgress(current);
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//            progressDialog.setIndeterminate(false);
+            progressDialog.setCanceledOnTouchOutside(false);
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+        }
+
+        @Override
+        public void closeProgressDialog() {
+            if (progressDialog != null){
+                progressDialog.dismiss();
+            }
+        }
+    };
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         currentLevel = LEVEL_PROVINCE;
-        Utility.writeMyChinaCountyToDb();
+//        Utility.writeMyChinaCountyToDb();
+        progressDialog = new ProgressDialog(getActivity());
+        new TaskLoadCountyToDb(showProgressDialogListener).execute();
     }
 
     @Nullable
@@ -92,7 +120,7 @@ public class FragmentChooseArea extends Fragment {
         backButton = (Button) view.findViewById(R.id.fragment_choose_area_title_back);
         seachButton = (Button) view.findViewById(R.id.fragment_choose_area_title_seach);
         listView = (ListView) view.findViewById(R.id.fragment_choose_area_title_list);
-        adapter = new ArrayAdapter<String>(MyApplication.getContext(),R.layout.list_item1,dataList);
+        adapter = new ChooseAreaListAdapter(MyApplication.getContext(),R.layout.list_choose_area_adapter,dataList);
         listView.setAdapter(adapter);
 
         floatingActionButton = (FloatingActionButton) view.findViewById(R.id.fragment_choose_area_floatingActionButton);
@@ -212,38 +240,21 @@ public class FragmentChooseArea extends Fragment {
      * 查询选中市内所有的县，优先从数据库查询
      */
     private void queryCounties(){
-        titleText.setText(selectedCity.getCity_CN());
-        backButton.setVisibility(View.VISIBLE);
-        countyList = DataSupport.where("City_CN = ?",String.valueOf(selectedCity.getCity_CN())).find(MyCounty.class);
-        if (countyList.size() > 0){
-            dataList.clear();
-            for (MyCounty myCounty : countyList){
-                dataList.add(myCounty.getCounty_CN());
+        if (DataSupport.findAll(MyCounty.class).size() >= 3240){
+            titleText.setText(selectedCity.getCity_CN());
+            countyList = DataSupport.where("City_CN = ?",String.valueOf(selectedCity.getCity_CN())).find(MyCounty.class);
+            if (countyList.size() > 0){
+                dataList.clear();
+                for (MyCounty myCounty : countyList){
+                    dataList.add(myCounty.getCounty_CN());
+                }
+                adapter.notifyDataSetChanged();
+                listView.setSelection(0);
+                currentLevel = LEVEL_COUNTY;
             }
-            adapter.notifyDataSetChanged();
-            listView.setSelection(0);
-            currentLevel = LEVEL_COUNTY;
         }else {
             Toast.makeText(getActivity(),"数据库加载中，大概需要30s，请不要关闭程序",Toast.LENGTH_SHORT).show();
         }
-    }
-    /**
-     * 显示进度对话框
-     */
-    private void showProgressDialog(){
-        if (progressDialog == null){
-            progressDialog = new ProgressDialog(getActivity());
-            progressDialog.setMessage("正在加载");
-            progressDialog.setCanceledOnTouchOutside(false);
-        }
-        progressDialog.show();
-    }
-    /**
-     * 关闭进度对话框
-     */
-    private void closeProgressDialog(){
-        if (progressDialog != null){
-            progressDialog.dismiss();
-        }
+
     }
 }

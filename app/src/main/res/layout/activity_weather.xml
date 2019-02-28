@@ -58,6 +58,14 @@
 
             </android.support.design.widget.AppBarLayout>
 
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/activity_weather_floatingactionbutton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:layout_gravity="bottom|end"
+                app:layout_behavior="com.weatherforecast.android.util.FabScrollBehavior"/>
+
             <android.support.v4.widget.SwipeRefreshLayout
                 android:id="@+id/activity_weather_swiperefreshlayout"
                 android:layout_width="match_parent"
@@ -80,6 +88,7 @@
                         <include layout="@layout/title" />
                         <include layout="@layout/now"/>
                         <include layout="@layout/now2"/>
+                        <include layout="@layout/forecasthourly"/>
                         <include layout="@layout/forecast"/>
                         <include layout="@layout/suggestion"/>
 
@@ -90,50 +99,68 @@
 
             </android.support.v4.widget.SwipeRefreshLayout>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/activity_weather_floatingactionbutton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="20dp"
-                android:layout_gravity="bottom|end"
-                android:src="@drawable/ic_home"/>
-
         </android.support.design.widget.CoordinatorLayout>
 
-        <LinearLayout
-            android:orientation="vertical"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="start"
             android:background="@color/colorPrimaryDark"
             android:fitsSystemWindows="true">
 
-            <android.support.design.widget.NavigationView
-                android:id="@+id/activity_weather_navigationview"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="15"
-                android:layout_gravity="start"
-                android:background="@color/colorPrimary"
-                app:headerLayout="@layout/weather_navigation_header"
-                app:menu="@menu/weather_navigation_menu"
-                app:itemTextColor="#fff" />
+            <android.support.v4.widget.NestedScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/activity_weather_drawerlayout_header">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"                    >
+                    <include layout="@layout/weather_navigation_header"/>
+                </LinearLayout>
+            </android.support.v4.widget.NestedScrollView>
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1">
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:background="@color/colorPrimaryDark"
+                android:id="@+id/activity_weather_drawerlayout_bottomLinearLayout">
                 <Button
-                    android:id="@+id/activity_weather_drawerlayout_buttonSetup"
+                    android:id="@+id/activity_weather_drawerlayout_Setupbutton"
                     android:layout_width="25dp"
                     android:layout_height="25dp"
                     android:layout_gravity="center"
-                    android:layout_marginLeft="25dp"
-                    android:layout_marginStart="25dp"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
                     android:background="@drawable/ic_settings"/>
             </LinearLayout>
 
-        </LinearLayout>
+            <TextView
+                android:id="@+id/activity_weather_drawerlayout_notice"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="您收藏的地点会被显示在此处"
+                android:textSize="20sp"
+                android:gravity="center"
+                android:textColor="#fff"
+                android:background="@color/colorPrimary"
+                android:layout_above="@id/activity_weather_drawerlayout_bottomLinearLayout"
+                android:layout_below="@id/activity_weather_drawerlayout_header"
+                android:visibility="visible"/>
+
+            <ListView
+                android:id="@+id/activity_weather_drawerlayout_likedlist"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimary"
+                android:layout_above="@id/activity_weather_drawerlayout_bottomLinearLayout"
+                android:layout_below="@id/activity_weather_drawerlayout_header"
+                android:visibility="invisible"/>
+
+        </RelativeLayout>
 
     </android.support.v4.widget.DrawerLayout>
 

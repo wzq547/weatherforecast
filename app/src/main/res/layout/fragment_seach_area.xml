@@ -19,11 +19,12 @@
             android:layout_gravity="center_vertical|left|start"
             android:textColor="#fff"
             android:textSize="20sp"
-            android:maxLines="1"
+            android:singleLine="true"
             android:hint="请在此输入要搜索的地区名"
             android:textColorHint="#969696"
             android:textCursorDrawable="@drawable/cursor_color"
-            android:theme="@style/MyEditText"/>
+            android:theme="@style/MyEditText"
+            android:imeOptions="actionSearch"/>
 
         <Button
             android:id="@+id/fragment_seach_area_title_back"
@@ -32,14 +33,6 @@
             android:layout_marginLeft="10dp"
             android:layout_gravity="center_vertical|start|left"
             android:background="@drawable/button_background"/>
-
-        <Button
-            android:id="@+id/fragment_seach_area_title_seach"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_marginRight="10dp"
-            android:layout_gravity="center_vertical|end|right"
-            android:background="@drawable/ic_search" />
 
     </FrameLayout>
 
