@@ -21,7 +21,7 @@
             android:name=".Activity.ActivityWeather"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:theme="@style/FitsSystemWindowsTheme">
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

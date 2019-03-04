@@ -5,8 +5,7 @@
     android:id="@+id/activity_weather"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimary"
-    android:fitsSystemWindows="true">
+    android:background="@color/colorPrimary">
 
     <ImageView
         android:id="@+id/activity_weather_imageview"
@@ -17,18 +16,15 @@
     <android.support.v4.widget.DrawerLayout
         android:id="@+id/activity_weather_drawerlayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
 
         <android.support.design.widget.CoordinatorLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fitsSystemWindows="true">
+            android:layout_height="match_parent">
 
             <android.support.design.widget.AppBarLayout
                 android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:fitsSystemWindows="true">
+                android:layout_height="?attr/actionBarSize">
 
                 <android.support.design.widget.CollapsingToolbarLayout
                     android:id="@+id/activity_weather_collapsingtoolbatlayout"
@@ -36,23 +32,13 @@
                     android:layout_height="match_parent"
                     android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                     app:contentScrim="?attr/colorPrimary"
-                    app:layout_scrollFlags="scroll|exitUntilCollapsed"
-                    android:fitsSystemWindows="true">
-
-                    <ImageView
-                        android:id="@+id/activity_weather_toobarimageview"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        app:layout_collapseMode="parallax"
-                        android:fitsSystemWindows="true"/>
+                    app:layout_scrollFlags="scroll|enterAlways|snap">
 
                     <android.support.v7.widget.Toolbar
                         android:id="@+id/activity_weather_toolbar"
                         android:layout_width="match_parent"
                         android:layout_height="?attr/actionBarSize"
-                        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                        app:layout_collapseMode="pin"/>
+                        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
                 </android.support.design.widget.CollapsingToolbarLayout>
 
@@ -82,8 +68,7 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:fitsSystemWindows="true">
+                        android:orientation="vertical">
 
                         <include layout="@layout/title" />
                         <include layout="@layout/now"/>
@@ -105,8 +90,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:background="@color/colorPrimaryDark"
-            android:fitsSystemWindows="true">
+            android:background="@color/colorPrimaryDark">
 
             <android.support.v4.widget.NestedScrollView
                 android:layout_width="wrap_content"

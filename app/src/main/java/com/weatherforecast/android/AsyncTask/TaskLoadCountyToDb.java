@@ -22,6 +22,7 @@ public class TaskLoadCountyToDb extends AsyncTask<Void,Integer,Boolean> {
     private static final String TAG = "TaskLoadCountyToDb";
 
     private ShowProgressDialogListener listener;
+    private Boolean isFirst;
 
     public TaskLoadCountyToDb(ShowProgressDialogListener listener){
         this.listener = listener;
@@ -46,6 +47,7 @@ public class TaskLoadCountyToDb extends AsyncTask<Void,Integer,Boolean> {
         int j = 0;
         MyCounty last = DataSupport.findLast(MyCounty.class);
         if (last == null){
+            isFirst = true;
             try {
                 File countyCsv = new File("/data/data/com.weatherforecast.android/files/" + "county.csv"); // CSV文件路径
                 BufferedReader countybr = new BufferedReader(new FileReader(countyCsv));
@@ -66,6 +68,7 @@ public class TaskLoadCountyToDb extends AsyncTask<Void,Integer,Boolean> {
                 e.printStackTrace();
             }
         }else if ((j = last.getId()) < i){
+            isFirst = true;
             LogUtil.i(TAG, "onCreate: "+ j);
             final int k = j;
             try {
@@ -73,7 +76,7 @@ public class TaskLoadCountyToDb extends AsyncTask<Void,Integer,Boolean> {
                 BufferedReader countybr = new BufferedReader(new FileReader(countyCsv));
                 String line = "";
                 for (int l = k; l >= 1; l--){
-                    line = countybr.readLine();
+                    countybr.readLine();
                 }
                 while ((line = countybr.readLine()) != null) {
                     j++;
@@ -97,9 +100,13 @@ public class TaskLoadCountyToDb extends AsyncTask<Void,Integer,Boolean> {
     @Override
     protected void onProgressUpdate(Integer... values) {
         int current = values[0];
-        int total = values[1];
+        if (isFirst == true){
+            int total = values[1];
+            listener.initProgressDialog(total);
+            isFirst = false;
+        }
         LogUtil.i(TAG, "onProgressUpdate: "+current);
-        listener.showProgressDialog(current,total);
+        listener.showProgressDialog(current);
     }
 
     @Override

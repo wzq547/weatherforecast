@@ -203,8 +203,6 @@ public class ActivityWeather extends BaseActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeAsUpIndicator(R.drawable.ic_home);
         }
-        toolBarImageView = (ImageView) findViewById(R.id.activity_weather_toobarimageview);
-        Glide.with(MyApplication.getContext()).load(R.drawable.bg).into(toolBarImageView);
         /**
          *主页背景图
          */
@@ -249,7 +247,7 @@ public class ActivityWeather extends BaseActivity {
             public void onRefresh() {
                 if (mlocation == null){
                     swipeRefreshLayout.setRefreshing(false);
-                    Snackbar.make(view,"还未获取定位信息，无法刷新天气信息，请检查网络后重启程序重试",Snackbar.LENGTH_INDEFINITE)
+                    Snackbar.make(view,"还未获取定位信息，无法刷新天气信息，请检查网络后重启程序重试",Snackbar.LENGTH_LONG)
                             .setAction("重启", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {

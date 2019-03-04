@@ -5,6 +5,7 @@ package com.weatherforecast.android.util;
  */
 
 public interface ShowProgressDialogListener {
-    void showProgressDialog(int current,int total);
+    void initProgressDialog(int total);
+    void showProgressDialog(int current);
     void closeProgressDialog();
 }

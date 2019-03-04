@@ -82,22 +82,29 @@ public class FragmentChooseArea extends Fragment {
      * 进度对话框
      */
     private ShowProgressDialogListener showProgressDialogListener = new ShowProgressDialogListener() {
+
         @Override
-        public void showProgressDialog(int current,int total) {
+        public void initProgressDialog(int total) {
+            progressDialog = new ProgressDialog(getActivity());
             progressDialog.setTitle("正在加载全国城市数据");
             progressDialog.setMessage("本过程不消耗流量");
             progressDialog.setMax(total);
-            progressDialog.setProgress(current);
+            progressDialog.setProgress(0);
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-//            progressDialog.setIndeterminate(false);
             progressDialog.setCanceledOnTouchOutside(false);
             progressDialog.setCancelable(false);
             progressDialog.show();
         }
 
         @Override
+        public void showProgressDialog(int current) {
+            progressDialog.setProgress(current);
+//            progressDialog.setIndeterminate(false);
+        }
+
+        @Override
         public void closeProgressDialog() {
-            if (progressDialog != null){
+            if (progressDialog != null && progressDialog.isShowing()){
                 progressDialog.dismiss();
             }
         }
@@ -108,7 +115,6 @@ public class FragmentChooseArea extends Fragment {
         super.onCreate(savedInstanceState);
         currentLevel = LEVEL_PROVINCE;
 //        Utility.writeMyChinaCountyToDb();
-        progressDialog = new ProgressDialog(getActivity());
         new TaskLoadCountyToDb(showProgressDialogListener).execute();
     }
 
